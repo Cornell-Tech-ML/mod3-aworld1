@@ -6,6 +6,38 @@
 
 * Overview: https://minitorch.github.io/module3.html
 
+## Part 3.4 Graph
+
+![Naive vs CUDA (Module 3) vs NumPy (Library)](./img/mod3_graph.png)
+
+Above is a graph (Time in seconds vs Matrix Size NxN) comparing the naive implementation prior to matrix multiplication against the new code created in module 3.4 for matrix multiplication. For context, the numpy matrix multiplication is shown here as well, which is fully optimized beyond our efforts here in module 3.4. However, clearly the work done in this module drastically speeds up computation, as naive vs cuda diverge wildly from the beginning. For additional context, a point is included as reference for matrix size of 256x256, where the naive implementation is over 100x slower than the CUDA implementation, but still lacking from numpy's matrix multiplication by about a factor of 2.
+
+## Part 3.5 Logs
+
+### [Simple]
+
+### GPU Log & CPU Log
+![GPU Log](./img/gpu_simple.png)
+![CPU Log](./img/cpu_simple.png)
+
+### [Split]
+
+### GPU Log & CPU Log
+![GPU Log](./img/gpu_split.png)
+![CPU Log](./img/cpu_split.png)
+
+### [XOR]
+
+### GPU Log & CPU Log
+![GPU Log](./img/gpu_xor.png)
+![CPU Log](./img/cpu_xor.png)
+
+### [Simple Large (Hidden=200)]
+
+### GPU Log & CPU Log
+![GPU Log](./img/gpu_simple_big.png)
+![CPU Log](./img/cpu_simple_big.png)
+
 ## Parallel Check Optimization
 ```
 MAP
