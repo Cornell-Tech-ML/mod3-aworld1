@@ -1,8 +1,10 @@
 import random
+from tracemalloc import start
 
 import numba
 
 import minitorch
+import time
 
 datasets = minitorch.datasets
 FastTensorBackend = minitorch.TensorBackend(minitorch.FastOps)
@@ -29,8 +31,16 @@ class Network(minitorch.Module):
         self.layer3 = Linear(hidden, 1, backend)
 
     def forward(self, x):
-        # TODO: Implement for Task 3.5.
-        raise NotImplementedError("Need to implement for Task 3.5")
+        # First layer with ReLU activation
+        hidden1 = self.layer1.forward(x).relu()
+
+        # Second layer with ReLU activation
+        hidden2 = self.layer2.forward(hidden1).relu()
+
+        # Output layer with sigmoid activation
+        output = self.layer3.forward(hidden2).sigmoid()
+
+        return output
 
 
 class Linear(minitorch.Module):
@@ -43,8 +53,11 @@ class Linear(minitorch.Module):
         self.out_size = out_size
 
     def forward(self, x):
-        # TODO: Implement for Task 3.5.
-        raise NotImplementedError("Need to implement for Task 3.5")
+        # Matrix multiplication: x @ weights
+        batch_multiply = x @ self.weights.value
+
+        # Add bias term, broadcasting automatically
+        return batch_multiply + self.bias.value
 
 
 class FastTrain:
@@ -65,12 +78,14 @@ class FastTrain:
         BATCH = 10
         losses = []
 
+        start = time.time()
+        print("Start time: ", start)
+
         for epoch in range(max_epochs):
             total_loss = 0.0
             c = list(zip(data.X, data.y))
             random.shuffle(c)
             X_shuf, y_shuf = zip(*c)
-
             for i in range(0, len(X_shuf), BATCH):
                 optim.zero_grad()
                 X = minitorch.tensor(X_shuf[i : i + BATCH], backend=self.backend)
@@ -97,6 +112,12 @@ class FastTrain:
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
                 log_fn(epoch, total_loss, correct, losses)
 
+        # output the end time
+        end = time.time()
+        print("End time: ", end)
+        print("Time taken: ", end - start)
+        print("Time per epoch: ", (end - start) / max_epochs)
+
 
 if __name__ == "__main__":
     import argparse
@@ -116,7 +137,7 @@ if __name__ == "__main__":
     if args.DATASET == "xor":
         data = minitorch.datasets["Xor"](PTS)
     elif args.DATASET == "simple":
-        data = minitorch.datasets["Simple"].simple(PTS)
+        data = minitorch.datasets["Simple"](PTS) # fix from edstem
     elif args.DATASET == "split":
         data = minitorch.datasets["Split"](PTS)
 

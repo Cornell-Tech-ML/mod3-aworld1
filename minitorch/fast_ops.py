@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Any
 
-import numpy as np
-from numba import prange
-from numba import njit as _njit
+import numpy as np  # type: ignore
+from numba import prange  # type: ignore
+from numba import njit as _njit  # type: ignore
 
 from .tensor_data import (
     MAX_DIMS,
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from typing import Callable, Optional
 
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides
 
 # TIP: Use `NUMBA_DISABLE_JIT=1 pytest tests/ -m task3_1` to run these tests without JIT.
 
@@ -30,6 +30,7 @@ Fn = TypeVar("Fn")
 
 
 def njit(fn: Fn, **kwargs: Any) -> Fn:
+    """Decorator to JIT compile a function."""
     return _njit(inline="always", **kwargs)(fn)  # type: ignore
 
 
@@ -142,6 +143,18 @@ class FastOps(TensorOps):
 def tensor_map(
     fn: Callable[[float], float],
 ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides], None]:
+    """Maps a function across elements in a tensor.
+
+    Args:
+    ----
+        fn: Function to apply to each element
+
+    Returns:
+    -------
+        Compiled function that applies fn to each element in the tensor
+
+    """
+
     def _map(
         out: Storage,
         out_shape: Shape,
@@ -153,31 +166,44 @@ def tensor_map(
         size = 1
         for i in range(len(out_shape)):
             size *= out_shape[i]
-        
+
         # Main parallel loop
         for i in prange(size):
             # Calculate output index
             out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
-            
+
             # Calculate input index - here's where we need to handle broadcasting correctly
             in_index = np.empty(MAX_DIMS, np.int32)
             broadcast_index(out_index, out_shape, in_shape, in_index)
-            
+
             # Get positions
             out_pos = index_to_position(out_index, out_strides)
             in_pos = index_to_position(in_index, in_strides)
-            
+
             # Apply function
             out[out_pos] = fn(in_storage[in_pos])
 
     return njit(_map, parallel=True)
 
 
-
 def tensor_zip(
     fn: Callable[[float, float], float],
-) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, Storage, Shape, Strides], None]:
+) -> Callable[
+    [Storage, Shape, Strides, Storage, Shape, Strides, Storage, Shape, Strides], None
+]:
+    """Applies a function to pairs of elements from two tensors.
+
+    Args:
+    ----
+        fn: Function to apply to pairs of elements
+
+    Returns:
+    -------
+        Compiled function that applies fn to pairs of elements from the input tensors
+
+    """
+
     def _zip(
         out: Storage,
         out_shape: Shape,
@@ -192,23 +218,23 @@ def tensor_zip(
         size = 1
         for i in range(len(out_shape)):
             size *= out_shape[i]
-        
+
         # Main parallel loop
         for i in prange(size):
             out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
-            
+
             # Handle broadcasting for both inputs
             a_index = np.empty(MAX_DIMS, np.int32)
             b_index = np.empty(MAX_DIMS, np.int32)
             broadcast_index(out_index, out_shape, a_shape, a_index)
             broadcast_index(out_index, out_shape, b_shape, b_index)
-            
+
             # Get positions
             out_pos = index_to_position(out_index, out_strides)
             a_pos = index_to_position(a_index, a_strides)
             b_pos = index_to_position(b_index, b_strides)
-            
+
             # Apply function
             out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
 
@@ -218,6 +244,18 @@ def tensor_zip(
 def tensor_reduce(
     fn: Callable[[float, float], float],
 ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, int], None]:
+    """Reduces a tensor along a dimension by applying a function to pairs of elements.
+
+    Args:
+    ----
+        fn: Function to apply in the reduction operation
+
+    Returns:
+    -------
+        Compiled function that performs the reduction operation on the input tensor
+
+    """
+
     def _reduce(
         out: Storage,
         out_shape: Shape,
@@ -231,28 +269,28 @@ def tensor_reduce(
         for i in range(len(out_shape)):
             size *= out_shape[i]
         reduce_size = a_shape[reduce_dim]
-        
+
         for i in prange(size):
             # Get output index
             out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
             out_pos = index_to_position(out_index, out_strides)
-            
+
             # Set up input index
             a_index = np.empty(MAX_DIMS, np.int32)
             for j in range(len(out_shape)):
                 a_index[j] = out_index[j]
-                
+
             # First value
             a_index[reduce_dim] = 0
             acc = a_storage[index_to_position(a_index, a_strides)]
-            
+
             # Reduce remaining values
             for j in range(1, reduce_size):
                 a_index[reduce_dim] = j
                 a_pos = index_to_position(a_index, a_strides)
                 acc = fn(acc, a_storage[a_pos])
-            
+
             out[out_pos] = acc
 
     return njit(_reduce, parallel=True)
@@ -274,30 +312,30 @@ def _tensor_matrix_multiply(
     n_rows = a_shape[1]
     n_cols = b_shape[2]
     n_inner = a_shape[2]
-    
+
     # Get batch strides, handling broadcasting
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
     b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
-    
+
     # Parallel loop over batches
     for batch in prange(n_batches):
         for i in range(n_rows):
             for j in range(n_cols):
                 acc = 0.0
-                
+
                 # Calculate base positions for this output element
-                out_pos = (batch * out_strides[0] + 
-                          i * out_strides[1] + 
-                          j * out_strides[2])
+                out_pos = (
+                    batch * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+                )
                 a_base = batch * a_batch_stride + i * a_strides[1]
                 b_base = batch * b_batch_stride + j * b_strides[2]
-                
+
                 # Inner product
                 for k in range(n_inner):
                     a_pos = a_base + k * a_strides[2]
                     b_pos = b_base + k * b_strides[1]
                     acc += a_storage[a_pos] * b_storage[b_pos]
-                
+
                 out[out_pos] = acc
 
 

@@ -9,26 +9,26 @@
 ## Parallel Check Optimization
 ```
 MAP
- 
+
 ================================================================================
- Parallel Accelerator Optimizing:  Function tensor_map.<locals>._map, 
-C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (145)  
+ Parallel Accelerator Optimizing:  Function tensor_map.<locals>._map,
+C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (145)
 ================================================================================
 
 
-Parallel loop listing for  Function tensor_map.<locals>._map, C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (145) 
+Parallel loop listing for  Function tensor_map.<locals>._map, C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (145)
 -----------------------------------------------------------------------------------------------|loop #ID
-    def _map(                                                                                  | 
-        out: Storage,                                                                          | 
-        out_shape: Shape,                                                                      | 
-        out_strides: Strides,                                                                  | 
-        in_storage: Storage,                                                                   | 
-        in_shape: Shape,                                                                       | 
-        in_strides: Strides,                                                                   | 
-    ) -> None:                                                                                 | 
-        size = 1                                                                               | 
-        for i in range(len(out_shape)):                                                        | 
-            size *= out_shape[i]                                                               | 
+    def _map(                                                                                  |
+        out: Storage,                                                                          |
+        out_shape: Shape,                                                                      |
+        out_strides: Strides,                                                                  |
+        in_storage: Storage,                                                                   |
+        in_shape: Shape,                                                                       |
+        in_strides: Strides,                                                                   |
+    ) -> None:                                                                                 |
+        size = 1                                                                               |
+        for i in range(len(out_shape)):                                                        |
+            size *= out_shape[i]                                                               |
                                                                                                |
         # Main parallel loop                                                                   |
         for i in prange(size):-----------------------------------------------------------------| #0
@@ -43,7 +43,7 @@ Parallel loop listing for  Function tensor_map.<locals>._map, C:\Users\Assaf\VSC
             # Get positions                                                                    |
             out_pos = index_to_position(out_index, out_strides)                                |
             in_pos = index_to_position(in_index, in_strides)                                   |
-                                                                                               |
+                                                                                                |
             # Apply function                                                                   |
             out[out_pos] = fn(in_storage[in_pos])                                              |
 --------------------------------- Fusing loops ---------------------------------
@@ -74,7 +74,7 @@ and reused inside the loop):
     - numpy.empty() is used for the allocation.
 None
 ZIP
- 
+
 ================================================================================
  Parallel Accelerator Optimizing:  Function tensor_zip.<locals>._zip,
 C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (181)
@@ -150,7 +150,7 @@ and reused inside the loop):
     - numpy.empty() is used for the allocation.
 None
 REDUCE
- 
+
 ================================================================================
  Parallel Accelerator Optimizing:  Function tensor_reduce.<locals>._reduce,
 C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (221)
@@ -223,7 +223,7 @@ and reused inside the loop):
     - numpy.empty() is used for the allocation.
 None
 MATRIX MULTIPLY
- 
+
 ================================================================================
  Parallel Accelerator Optimizing:  Function _tensor_matrix_multiply,
 C:\Users\Assaf\VSC\mod3-aworld1\minitorch\fast_ops.py (261)
