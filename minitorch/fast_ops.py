@@ -173,7 +173,7 @@ def tensor_map(
             out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
 
-            # Calculate input index - here's where we need to handle broadcasting correctly
+            # Calculate input index
             in_index = np.empty(MAX_DIMS, np.int32)
             broadcast_index(out_index, out_shape, in_shape, in_index)
 
